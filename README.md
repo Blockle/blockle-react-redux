@@ -1,71 +1,46 @@
-# @blockle/form
+# @blockle/react-redux
+
+Drop in replacemenet for react-redux when only using hooks.
 
 ## Install
 
 ```bash
-yarn add @blockle/form
+yarn add @blockle/react-redux
 ```
 
 ## Usage
 
 ```tsx
-import React, { useState } from 'react';
-import { Form, useField, FieldProps } from '@blockle/form';
+import React from 'react';
+import { Store } from 'redux';
 
-interface FormData {
-  name: string;
+interface Props {
+  children: React.ReactNode;
+  store: Store;
 }
 
-const MyForm = () => {
-  const [errorMessage, setErrorMessage] = useState(null);
-  const submit = async (formData: FormData) => {
-    try {
-      await xhr.send(formData);
-    } catch(error) {
-      setErrorMessage(error.message);
-    }
-  }
-
+const AppShell = ({ children }) => {
   return (
-    <Form
-      onSubmit={submit}
-      render={({ invalid, submitting }) => (
-        <Input name="name" type="text" required />
-
-        {errorMessage
-          && <div>{errorMessage}</div>}
-
-        <button disabled={invalid || submitting}>Submit</button>
-      )}
-    />
+    <Provider store={store}>
+      {children}
+    </Provider>
   );
 }
 
-// Input.tsx
-interface InputProps extends FieldProps<string> {
-  type: 'text' | 'password';
-  required: boolean;
-}
-
-const Input = ({ name, value, type, required }: InputProps) => {
-  const field = useField<string>(name, {
-    value,
-    validate(value) {
-      if(required && !value.trim()) {
-        return 'required';
-      }
-
-      return null;
-    }
-  });
+const MyComponent = () => {
+  const dispatch = useDispatch();
+  const item = useSelector((state) => state.userName);
 
   return (
-    <input
-      type={type}
-      value={field.value}
-      onChange={(event) => field.setValue(event.currentTarget.value)}
-      onFocus={field.setTouched}
-    />
-  );
+    <div>
+      {userName}
+
+      <button onClick={() => dispatch(randomizeName())}>
+        Randomize name
+      </button>
+    </div>
+  )
 }
+
+
 ```
