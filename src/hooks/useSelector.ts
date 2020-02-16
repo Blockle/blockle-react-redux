@@ -1,21 +1,29 @@
-import { useMemo, useRef, useLayoutEffect, useReducer } from 'react';
-
+import { useLayoutEffect, useReducer, useRef } from 'react';
 import { useStore } from './useStore';
 
 const refEquality = (a: any, b: any) => a === b;
 
-export const useSelector = <S, R>(selector: (state: S) => R, equalityFn = refEquality) => {
+export const useSelector = <S, R>(selector: (state: S) => R, equalityFn = refEquality): R => {
   const [, forceRender] = useReducer(s => s + 1, 0);
   const store = useStore<S>();
-  const initialState = useMemo(() => selector(store.getState()), []);
-  const selectedRef = useRef<R>(initialState);
+  const selectedRef = useRef<R>();
+  const selectorRef = useRef<typeof selector>();
 
-  // Subscribe to changes asap
+  // Set initialValue and update value when selector changed
+  if (selectorRef.current !== selector) {
+    selectedRef.current = selector(store.getState());
+  }
+
+  selectorRef.current = selector;
+
+  // Subscribe to changes
   useLayoutEffect(() => {
-    selectedRef.current = initialState;
-
     return store.subscribe(() => {
-      const selected = selector(store.getState());
+      if (!selectorRef.current) {
+        return;
+      }
+
+      const selected = selectorRef.current(store.getState());
 
       if (equalityFn(selectedRef.current, selected)) {
         return;
@@ -26,5 +34,6 @@ export const useSelector = <S, R>(selector: (state: S) => R, equalityFn = refEqu
     });
   }, []);
 
-  return selectedRef.current;
+  // selectedRef always contains the selector return value
+  return selectedRef.current as R;
 };
