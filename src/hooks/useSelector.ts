@@ -9,7 +9,7 @@ export const useSelector = <S, R>(selector: (state: S) => R, equalityFn = refEqu
   const selectedRef = useRef<R>();
   const selectorRef = useRef<typeof selector>();
 
-  // Set initialValue and update value when selector changed
+  // Set initialValue and update when selector changed
   if (selectorRef.current !== selector) {
     selectedRef.current = selector(store.getState());
   }
