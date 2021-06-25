@@ -6,34 +6,33 @@ const refEquality = (a: any, b: any) => a === b;
 export const useSelector = <S, R>(selector: (state: S) => R, equalityFn = refEquality): R => {
   const [, forceRender] = useReducer(s => s + 1, 0);
   const store = useStore<S>();
-  const selectedRef = useRef<R>();
-  const selectorRef = useRef<typeof selector>();
+  const currentSelected = useRef<R>();
+  const currentSelector = useRef<typeof selector>();
 
   // Set initialValue and update when selector changed
-  if (selectorRef.current !== selector) {
-    selectedRef.current = selector(store.getState());
+  if (currentSelector.current !== selector) {
+    currentSelected.current = selector(store.getState());
   }
 
-  selectorRef.current = selector;
+  currentSelector.current = selector;
 
   // Subscribe to changes
   useLayoutEffect(() => {
     return store.subscribe(() => {
-      if (!selectorRef.current) {
+      if (!currentSelector.current) {
         return;
       }
 
-      const selected = selectorRef.current(store.getState());
+      const selected = currentSelector.current(store.getState());
 
-      if (equalityFn(selectedRef.current, selected)) {
+      if (equalityFn(currentSelected.current, selected)) {
         return;
       }
 
-      selectedRef.current = selected;
-      forceRender({});
+      currentSelected.current = selected;
+      forceRender();
     });
   }, []);
 
-  // selectedRef always contains the selector return value
-  return selectedRef.current as R;
+  return currentSelected.current as R;
 };
